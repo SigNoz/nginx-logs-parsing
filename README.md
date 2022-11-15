@@ -13,6 +13,7 @@
 * Create an account and go to logs.
 * Select the time range to be one week.
   
+ ## Regex testing https://regex101.com/r/2HSyk2/1
 
 ## Note
 * For testing purposes `add-filter-attr` operator `filter/logs` is added. It can be removed once testing is done
