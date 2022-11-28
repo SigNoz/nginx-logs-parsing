@@ -1,32 +1,10 @@
 receivers:
   filelog/dockercontainers:
-    include: [  "/var/lib/docker/containers/*/*.log" ]
+    include: [  "/nginx_log_path" ]
     start_at: end
     include_file_path: true
     include_file_name: false
     operators:
-    - type: json_parser
-      id: parser-docker
-      output: extract_metadata_from_filepath
-      timestamp:
-        parse_from: attributes.time
-        layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-    - type: regex_parser
-      id: extract_metadata_from_filepath
-      regex: '^.*containers/(?P<container_id>[^_]+)/.*log$'
-      parse_from: attributes["log.file.path"]
-      output: parse_body
-    - type: move
-      id: parse_body
-      from: attributes.log
-      to: body
-      output: nginx_logs_router
-    - type: router
-      id: nginx_logs_router
-      routes:
-        - output: parse_nginx
-          expr: 'body matches "^\\[[^\\]]*] (([0-9]{1,3}\\.){3}[0-9]{1,3}) - - ((GET|POST|HEAD|PUT|DELETE|TRACE|CONNECT))"'
-      default: add-attr
     - type: regex_parser
       id: parse_nginx
       regex: '^\[(?P<date>\d{1,2}\/\w{3}\/\d{1,4}(:[0-9]{1,2}){3} \+([0-9]){1,4})\] (?P<remote_user>([0-9]{1,3}\.){3}[0-9]{1,3}) - - (?P<http_method>(GET|POST|HEAD|PUT|DELETE|TRACE|CONNECT)) (-|(?P<http_path>\S+))? (-|(?P<http_request_length>\d+))? (-|(?P<http_status_code>\d+))? (-|(?P<newtwork_bytes_sent>\d+)) (-|(?P<network_body_bytes_sent>\d+))? (-|(?P<referer>\S+))? "(?P<http_user_agent>[^\\]?(.*?[^\\]))" (?P<dest_ip>([0-9]{1,3}\.){3}[0-9]{1,3}):(?P<network_dest_port>\d+) (-|(?P<network_dest_status_code>\d+))?[ ]*(-|(?P<network_dest_response_time>([0-9]*[.])?[0-9]+))?[ ]*(-|(?P<network_dest_connect_time>([0-9]*[.])?[0-9]+))?[ ]*(-|(?P<network_destination_header_time>([0-9]*[.])?[0-9]+))?[ ]*(-|(?P<duration_in_s>([0-9]*[.])?[0-9]+))?[ ]*(-|"(?P<http_forwarded_for>(.*?[^\\]))")?[ ]*(-|(?P<network_destination_service>\w+))?[ ]*(-|"(?P<network_client_type>(.*?[^\\]))")?[ ]*(-|"(?P<device_id>(.*?[^\\]))")?[ ]*(-|"(?P<http_request_id>(.*?[^\\]))")?[ ]*(-|"(?P<trace_id>(.*?[^\\]))")?[ ]*(-|"(?P<span_id>(.*?[^\\]))")?[ ]*(-|(?P<hostname>\w+))?'
@@ -54,15 +32,6 @@ receivers:
       id: remove-trace-id
       field: attributes.trace_id
       output: remove-time-attr
-    # end-nginx-parser --------------------------------
-    - type: add
-      id: add-filter-attr
-      field: attributes.continue
-      value: 'no'
-      output: remove-time-attr
-    - type: remove
-      id: remove-time-attr
-      field: attributes.time
   opencensus:
     endpoint: 0.0.0.0:55678
   otlp/spanmetrics:
