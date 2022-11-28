@@ -31,7 +31,6 @@ receivers:
     - type: remove
       id: remove-trace-id
       field: attributes.trace_id
-      output: remove-time-attr
   opencensus:
     endpoint: 0.0.0.0:55678
   otlp/spanmetrics:
